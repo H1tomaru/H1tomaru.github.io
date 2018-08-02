@@ -1,0 +1,134 @@
+<title>Discourse Simple Shoutbox / Chat Plugin</title>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="discourse chat forum shoutbox best chatbro babble plugin simple guide free alternative telegram">
+<link rel="canonical" href="http://discourse-shoutbox.info/" />
+<link rel="shortcut icon" href="http://www.iconj.com/icon.php?pid=7bynz060kg" type="image/x-icon" />
+<link rel="shortcut icon" href="http://www.iconj.com/gif_icon.php?pid=7bynz060kg" type="image/gif" /> 
+<script id="chatBroEmbedCode">
+/* Chatbro Widget Embed Code Start */
+function ChatbroLoader(chats,async){async=!1!==async;var params={embedChatsParameters:chats instanceof Array?chats:[chats],lang:navigator.language||navigator.userLanguage,needLoadCode:'undefined'==typeof Chatbro,embedParamsVersion:localStorage.embedParamsVersion,chatbroScriptVersion:localStorage.chatbroScriptVersion},xhr=new XMLHttpRequest;xhr.withCredentials=!0,xhr.onload=function(){eval(xhr.responseText)},xhr.onerror=function(){console.error('Chatbro loading error')},xhr.open('GET','//www.chatbro.com/embed.js?'+btoa(unescape(encodeURIComponent(JSON.stringify(params)))),async),xhr.send()}
+/* Chatbro Widget Embed Code End */
+ChatbroLoader({encodedChatId: '2239K'});
+</script>
+</head>
+
+<body>
+<h1>Discourse shoutbox / chat<br>Fast and simple</h1>
+
+Heres how to get a fast, simple shoutbox / chat on your Discourse forum that just works<br>
+<br>
+Go to chatbro.com, create and customize your chat<br>
+<br>
+Layout --> Movable<br>
+Spoofing protection --> On<br>
+<br>
+Everything else is up to your preference<br>
+<br>
+Create a simple plugin on githhub with a single plugin.rb files that contains:
+
+<blockquote>
+<pre>
+<code>
+# name: Babble-is-crap
+# version: 9.9.9
+# authors: MrBug
+
+require 'digest/md5'
+
+after_initialize do
+
+	Discourse::Application.routes.append do
+			get '/ChatBroAuth' => 'chatbro#gogochat'
+	end
+
+	class ::ChatbroController < ::ApplicationController
+
+		def gogochat
+			if current_user
+				permiss = ''
+				params = {
+					encodedChatId: 'XXX',													######replace XXX with your chatID
+					siteDomain: 'yoursite.com',												######replace yoursite.com with your site domain
+					siteUserExternalId: current_user[:id],
+					siteUserFullName: current_user[:username],
+					siteUserAvatarUrl: "https://yoursite.com" + current_user.avatar_template.sub!('{size}', '120'),				######replace yoursite.com with your site domain
+					siteUserProfileUrl: "/u/"+current_user[:username],
+				}
+				(params[:permissions] = [ 'delete', 'ban']; permiss = params[:permissions].join('')) if current_user[:username] == 'XXX'	######replace XXX with your admin username
+				params[:signature] = Digest::MD5.hexdigest(
+					params[:siteDomain] +
+					params[:siteUserExternalId].to_s +
+					params[:siteUserFullName] +
+					params[:siteUserAvatarUrl] +
+					params[:siteUserProfileUrl] +
+					permiss +
+					'XXX'															######replace XXX with your chatbro secret key
+				)
+				render json: { params: params }
+			end
+		end
+
+	end
+
+end
+</code>
+</pre>
+</blockquote>
+
+Go to discourse admin --> Customize --> Themes --> Edit CSS/HTML and add to the &lt;head&gt;:
+
+<blockquote>
+<pre>
+<code>
+&lt;script id = "chatBroEmbedCode"&gt;
+	/* Chatbro Widget Embed Code Start */
+	function ChatbroLoader(chats,async) {
+		async = !1 !== async;
+
+		var params = {
+			embedChatsParameters: chats instanceof Array ? chats : [chats],
+			lang: navigator.language || navigator.userLanguage,
+			needLoadCode: 'undefined' == typeof Chatbro,
+			embedParamsVersion: localStorage.embedParamsVersion,
+			chatbroScriptVersion: localStorage.chatbroScriptVersion
+		},
+
+		xhr=new XMLHttpRequest;
+		xhr.withCredentials=!0,
+		xhr.onload=function() {
+			eval(xhr.responseText)
+		},
+
+		xhr.onerror=function() {
+			console.error('Chatbro loading error')
+		},
+
+		xhr.open('GET', '//www.chatbro.com/embed.js?' +
+			btoa(unescape(encodeURIComponent(JSON.stringify(params)))), async),
+			xhr.send()
+	}
+	/* Chatbro Widget Embed Code End */
+	
+	$.getJSON('/session/current.json', function(user) {
+		if (user) {
+			$.getJSON('/ChatBroAuth.json', function(data) {
+					ChatbroLoader(data.params);
+				}
+			});
+		}
+	});
+&lt;/script&gt;
+</code>
+</pre>
+</blockquote>
+
+Done!
+</body>
+
+<style>
+	pre {
+			background: lightgray;
+			overflow: auto;
+		}
+</style>
